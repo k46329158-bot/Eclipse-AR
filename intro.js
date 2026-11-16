@@ -1,3 +1,27 @@
+
+function playFriendlyIntroChime() {
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    const ctx = new AC();
+    const notes = [523.25, 659.25, 783.99, 1046.50];
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.14);
+      gain.gain.setValueAtTime(0.001, ctx.currentTime + i * 0.14);
+      gain.gain.exponentialRampToValueAtTime(0.08, ctx.currentTime + i * 0.14 + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + i * 0.14 + 0.75);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + i * 0.14);
+      osc.stop(ctx.currentTime + i * 0.14 + 0.8);
+    });
+  } catch (e) {}
+}
+playFriendlyIntroChime();
+
 (function() {
   // Ocultar cualquier intro vieja del HTML para evitar duplicados
   const oldIntro = document.getElementById('eclipseIntro');
@@ -113,7 +137,7 @@
       ctx.textAlign = 'center';
       ctx.fillStyle = '#ffffff';
       ctx.font = '800 58px Arial, sans-serif';
-      ctx.fillText('Eclipse AR', 640, 470 + (1 - textAlpha) * 14);
+      ctx.fillText('Eclipse<sup style="font-size:15px;color:#c084fc;margin-left:3px;">AR</sup>', 640, 470 + (1 - textAlpha) * 14);
 
       ctx.fillStyle = '#a1a1aa';
       ctx.font = '600 20px Arial, sans-serif';
