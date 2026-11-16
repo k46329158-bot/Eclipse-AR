@@ -70,7 +70,8 @@
 
     const subs = getSubs();
     const allVids = (typeof videos !== 'undefined' && Array.isArray(videos)) ? videos : [];
-    const availableCreators = Array.from(new Set(['Biología Desde Cero', 'Æiden Company', ...allVids.map(v => v.author).filter(Boolean)]));
+    const me = (JSON.parse(localStorage.getItem('eclipse_user') || 'null')?.name || '').toLowerCase();
+    const availableCreators = Array.from(new Set(allVids.map(v => v.author).filter(a => a && a.toLowerCase() !== me && a.toLowerCase() !== 'æiden company')));
     const subVids = allVids.filter(v => subs.some(s => s.toLowerCase() === String(v.author || '').toLowerCase()));
 
     const channelsBar = availableCreators.map(ch => {
