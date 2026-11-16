@@ -1,32 +1,40 @@
 (function() {
-  let soundPlayed = false;
-  function playEclipseChime() {
-    if (soundPlayed) return;
+  let audioCtx = null;
+  let melodyTriggered = false;
+
+  // Desbloquear el motor de audio del navegador en cualquier interacción previa
+  function unlockAudio() {
     try {
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return;
-      const ctx = new AC();
-      if (ctx.state === 'suspended') ctx.resume();
-      if (ctx.state !== 'running') return;
-      soundPlayed = true;
+      if (!audioCtx) audioCtx = new AC();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
       const pill = document.getElementById('introAudioPill');
-      if (pill) pill.remove();
-
-      const notes = [523.25, 659.25, 783.99, 987.77, 1046.50];
-      notes.forEach((f, i) => {
-        const osc = ctx.createOscillator();
-        const g = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(f, ctx.currentTime + i * 0.12);
-        g.gain.setValueAtTime(0.001, ctx.currentTime + i * 0.12);
-        g.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + i * 0.12 + 0.04);
-        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + i * 0.12 + 0.8);
-        osc.connect(g);
-        g.connect(ctx.destination);
-        osc.start(ctx.currentTime + i * 0.12);
-        osc.stop(ctx.currentTime + i * 0.12 + 0.85);
-      });
+      if (pill && audioCtx.state === 'running') pill.remove();
     } catch (e) {}
+  }
+
+  function triggerMorphMelody() {
+    if (melodyTriggered) return;
+    unlockAudio();
+    if (!audioCtx || audioCtx.state !== 'running') return;
+    melodyTriggered = true;
+
+    // Melodía corta, cálida y amigable sincronizada con la transformación
+    const notes = [523.25, 659.25, 783.99, 987.77, 1046.50];
+    notes.forEach((f, i) => {
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(f, audioCtx.currentTime + i * 0.11);
+      g.gain.setValueAtTime(0.001, audioCtx.currentTime + i * 0.11);
+      g.gain.exponentialRampToValueAtTime(0.2, audioCtx.currentTime + i * 0.11 + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + i * 0.11 + 0.78);
+      osc.connect(g);
+      g.connect(audioCtx.destination);
+      osc.start(audioCtx.currentTime + i * 0.11);
+      osc.stop(audioCtx.currentTime + i * 0.11 + 0.82);
+    });
   }
 
   function startAdaptiveIntro() {
@@ -39,9 +47,7 @@
         0%, 100% { transform: translateY(0px) scale(1); }
         50%      { transform: translateY(-9px) scale(1.03); }
       }
-      .eclipse-floating-logo {
-        animation: floatOrb 2.2s ease-in-out infinite;
-      }
+      .eclipse-floating-logo { animation: floatOrb 2.2s ease-in-out infinite; }
     `;
     document.head.appendChild(style);
 
@@ -58,7 +64,6 @@
               <circle id="moonCutCircle" cx="122" cy="50" r="32" fill="black"/>
             </mask>
           </defs>
-          <!-- Círculo redondo perfecto (sin estirarse hacia los costados) -->
           <circle cx="50" cy="50" r="36" fill="#9333EA" mask="url(#eclipseMoonMask)"/>
           <polygon id="arrowToStar" fill="#FFFFFF" points="43,36 43,36 63,50 63,50 43,64 43,64 43,50 43,50 43,36 43,36"/>
         </svg>
@@ -70,19 +75,24 @@
     `;
     document.body.appendChild(ov);
 
+    ['pointerdown', 'click', 'keydown', 'touchstart'].forEach(ev =>
+      window.addEventListener(ev, () => {
+        unlockAudio();
+        if (progress >= 0.4) triggerMorphMelody();
+      })
+    );
+
     const cutCircle = document.getElementById('moonCutCircle');
     const starPoly  = document.getElementById('arrowToStar');
     const titleEl   = document.getElementById('introTitle');
     const statusEl  = document.getElementById('introNetStatus');
 
-    // Medir velocidad real de red / carga de la página
     const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
     const speedMbps = (conn && conn.downlink) ? conn.downlink : 5;
     let pageReady = (document.readyState === 'complete');
     window.addEventListener('load', () => { pageReady = true; });
 
-    // Si internet es rápido (> 5 Mbps) dura ~1.1s; si es lento dura más y espera a que cargue
-    const minDuration = speedMbps >= 8 ? 1050 : (speedMbps >= 3 ? 1500 : 2300);
+    const minDuration = speedMbps >= 8 ? 1100 : (speedMbps >= 3 ? 1550 : 2300);
     const startTime = performance.now();
     let progress = 0;
 
@@ -94,10 +104,8 @@
 
       const t = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
 
-      // Ahuecado limpio desde la derecha sin estirar el círculo
       cutCircle.setAttribute('cx', (122 - t * 53).toFixed(1));
 
-      // Flecha girando sobre su eje y abriendo sus 5 puntas en estrella
       const cx = 50 + t * 23;
       const cy = 50 - t * 5;
       const rOut = 13 + t * 2;
@@ -111,6 +119,11 @@
       }
       starPoly.setAttribute('points', pts.join(' '));
 
+      // Disparar la música JUSTO en el punto medio de la transformación (45%)
+      if (progress >= 0.45 && !melodyTriggered) {
+        triggerMorphMelody();
+      }
+
       if (progress >= 0.55) {
         titleEl.style.opacity = '1';
         titleEl.style.transform = 'translateY(0)';
@@ -123,15 +136,10 @@
         setTimeout(() => {
           ov.style.opacity = '0';
           setTimeout(() => ov.remove(), 550);
-        }, 350);
+        }, 380);
       }
     }
     requestAnimationFrame(tick);
-
-    playEclipseChime();
-    ['pointerdown', 'click', 'keydown', 'touchstart'].forEach(ev =>
-      window.addEventListener(ev, playEclipseChime, { once: true })
-    );
   }
 
   if (document.body) startAdaptiveIntro();
