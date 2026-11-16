@@ -622,3 +622,96 @@ window.closeModal = function() {
     setInterval(hideStolenFromPublicFeed, 1500);
   });
 })();
+
+// === AGUJERO NEGRO PHOENIX A TRAGÁNDOSE VIDEOS PROHIBIDOS ===
+(function() {
+  const st = document.createElement('style');
+  st.textContent = `
+    @keyframes phoenixSpin {
+      0%   { transform: rotate(0deg) scale(1); }
+      50%  { transform: rotate(180deg) scale(1.06); }
+      100% { transform: rotate(360deg) scale(1); }
+    }
+    @keyframes videoSwallowed {
+      0%   { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+      65%  { transform: translate(-85px, 15px) rotate(-240deg) scale(0.45); opacity: 0.85; }
+      100% { transform: translate(-125px, 0px) rotate(-540deg) scale(0); opacity: 0; }
+    }
+    .phoenix-disk { animation: phoenixSpin 4s linear infinite; }
+    .swallowed-video-card { animation: videoSwallowed 2.1s cubic-bezier(0.55, 0.05, 0.68, 0.19) forwards; }
+  `;
+  document.head.appendChild(st);
+
+  window.triggerPhoenixBlackHole = function(videoTitle, rawReason) {
+    const old = document.getElementById('phoenixBlackHoleModal');
+    if (old) old.remove();
+
+    const rLow = (rawReason + ' ' + videoTitle).toLowerCase();
+    let customPhrase = 'Tu video rompió las reglas de Eclipse y fue devorado por el agujero negro Phoenix A.';
+    if (/porno|xxx|nsfw|desnud|sex|erotic|adult|cochin/.test(rLow)) {
+      customPhrase = 'Ve a subirlo a otro lado ¡Cochino!';
+    } else if (/animal|maltrat|crueldad|perro|gato|caza|sangre|gore/.test(rLow)) {
+      customPhrase = 'Los animales son alguien, no algo.';
+    } else if (/ia|ai|midjourney|sora|runway|sintetic|bot|chatgpt/.test(rLow)) {
+      customPhrase = 'Aquí creamos humanos, no robots. ¡Phoenix A se tragó tu relleno de IA!';
+    }
+
+    const ov = document.createElement('div');
+    ov.id = 'phoenixBlackHoleModal';
+    ov.style.cssText = 'position:fixed; inset:0; background:rgba(3, 3, 8, 0.94); backdrop-filter:blur(6px); z-index:2147483647; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; color:#fff; text-align:center;';
+    ov.innerHTML = `
+      <div style="font-size:12px; font-weight:800; letter-spacing:1.4px; color:#f59e0b; text-transform:uppercase; margin-bottom:10px;">
+        Horizonte de Sucesos · Phoenix A (100 Mil Millones de Masas Solares)
+      </div>
+
+      <div style="position:relative; width:340px; height:210px; display:flex; align-items:center; justify-content:center; margin-bottom:14px;">
+        <!-- Agujero Negro Supermasivo Phoenix A -->
+        <div class="phoenix-disk" style="position:relative; width:165px; height:165px; display:flex; align-items:center; justify-content:center;">
+          <svg width="165" height="165" viewBox="0 0 180 180">
+            <defs>
+              <radialGradient id="phoenixGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="35%" stop-color="#000000"/>
+                <stop offset="52%" stop-color="#9333ea"/>
+                <stop offset="72%" stop-color="#f59e0b"/>
+                <stop offset="100%" stop-color="transparent"/>
+              </radialGradient>
+            </defs>
+            <circle cx="90" cy="90" r="86" fill="url(#phoenixGlow)"/>
+            <ellipse cx="90" cy="90" rx="84" ry="26" fill="none" stroke="#fbbf24" stroke-width="3.5" opacity="0.9"/>
+            <ellipse cx="90" cy="90" rx="70" ry="18" fill="none" stroke="#c084fc" stroke-width="2.5" opacity="0.85"/>
+            <circle cx="90" cy="90" r="34" fill="#000000" stroke="#7e22ce" stroke-width="2.5"/>
+          </svg>
+        </div>
+
+        <!-- Tarjeta del video siendo succionada y estirada hacia el agujero negro -->
+        <div class="swallowed-video-card" style="position:absolute; right:14px; width:125px; background:#18181f; border:1px solid #ef4444; border-radius:10px; padding:8px; box-shadow:0 0 20px rgba(239,68,68,0.5);">
+          <div style="height:46px; background:#2e1065; border-radius:6px; display:flex; align-items:center; justify-content:center; margin-bottom:5px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#fda4af"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+          </div>
+          <div style="font-size:10px; font-weight:700; color:#fecaca; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${videoTitle || 'Video Prohibido'}</div>
+        </div>
+      </div>
+
+      <h2 style="margin:0 0 8px; font-size:23px; font-weight:900; color:#fda4af; max-width:520px;">
+        "${customPhrase}"
+      </h2>
+      <p style="margin:0 0 20px; font-size:13px; color:#a1a1aa; max-width:460px;">
+        Tu publicación fue bloqueada y absorbida por Phoenix A porque incumple las normas de convivencia y contenido humano de Eclipseᴬᴿ.
+      </p>
+      <button type="button" onclick="document.getElementById('phoenixBlackHoleModal').remove()" style="background:linear-gradient(135deg,#9333ea,#dc2626); color:#fff; border:none; padding:11px 26px; border-radius:18px; font-size:13.5px; font-weight:800; cursor:pointer; box-shadow:0 6px 20px rgba(220,38,38,0.4);">
+        Entendido · Salir
+      </button>
+    `;
+    document.body.appendChild(ov);
+  };
+
+  // Enganchar al escáner de reglas para disparar Phoenix A automáticamente cuando rechaza un video
+  const oldScan = window.scan;
+  window.scan = function(t, d, f) {
+    const res = typeof oldScan === 'function' ? oldScan(t, d, f) : { ok: true };
+    if (res && res.ok === false) {
+      setTimeout(() => window.triggerPhoenixBlackHole(t || 'Video rechazado', res.reason || t || ''), 60);
+    }
+    return res;
+  };
+})();
