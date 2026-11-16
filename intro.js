@@ -160,3 +160,40 @@ playFriendlyIntroChime();
   }
   requestAnimationFrame(animate);
 })();
+
+// === MELODÍA AMIGABLE GARANTIZADA EN INTRO ===
+(function() {
+  let played = false;
+  function playEclipseMelody() {
+    if (played) return;
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      const ctx = new AC();
+      if (ctx.state === 'suspended') ctx.resume();
+      if (ctx.state !== 'running') return;
+      played = true;
+
+      // Melodía cálida y amigable (Do - Mi - Sol - La - Do alto)
+      const notes = [523.25, 659.25, 783.99, 880.00, 1046.50];
+      notes.forEach((f, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(f, ctx.currentTime + i * 0.14);
+        gain.gain.setValueAtTime(0.001, ctx.currentTime + i * 0.14);
+        gain.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + i * 0.14 + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + i * 0.14 + 0.7);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + i * 0.14);
+        osc.stop(ctx.currentTime + i * 0.14 + 0.75);
+      });
+    } catch (e) {}
+  }
+
+  window.addEventListener('load', playEclipseMelody);
+  ['pointerdown', 'click', 'keydown', 'touchstart'].forEach(ev =>
+    window.addEventListener(ev, playEclipseMelody, { once: true })
+  );
+})();
