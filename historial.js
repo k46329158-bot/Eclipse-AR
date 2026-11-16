@@ -1,121 +1,129 @@
 (function() {
-  function hookHistoryMenu() {
-    const aside = document.querySelector('aside');
-    if (!aside) return;
-    let btn = document.getElementById('navEclipseHistory');
-    if (!btn) {
-      btn = document.createElement('div');
-      btn.id = 'navEclipseHistory';
-      btn.className = 'nav-item';
-      btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>Historial</span>`;
-      aside.appendChild(btn);
-    }
-    btn.onclick = renderYouTubeStyleHistory;
-
-    if (typeof window.playVideo === 'function' && !window.playVideo._ytHist) {
-      const orig = window.playVideo;
+  function hookVideoHistory() {
+    if (typeof window.playVideo === 'function' && !window.playVideo._ytHistHook) {
+      const origPlay = window.playVideo;
       window.playVideo = function(id) {
-        orig.apply(this, arguments);
+        origPlay.apply(this, arguments);
+        if (localStorage.getItem('eclipse_hist_paused') === '1') return;
         try {
           if (typeof videos !== 'undefined' && Array.isArray(videos)) {
             const v = videos.find(x => String(x.id) === String(id));
             if (v) {
               let h = JSON.parse(localStorage.getItem('eclipse_history_list') || '[]');
-              h = h.filter(it => String(it.id) !== String(v.id));
-              h.unshift({ id: v.id, title: v.title, author: v.author, thumb: v.thumb || '', desc: v.desc || '', date: new Date().toLocaleString() });
-              localStorage.setItem('eclipse_history_list', JSON.stringify(h.slice(0, 80)));
+              h = h.filter(item => String(item.id) !== String(v.id));
+              h.unshift({
+                id: v.id,
+                title: v.title,
+                author: v.author,
+                desc: v.desc || 'Video de Eclipse',
+                day: new Date().toLocaleDateString(),
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              });
+              localStorage.setItem('eclipse_history_list', JSON.stringify(h.slice(0, 100)));
             }
           }
         } catch (e) {}
       };
-      window.playVideo._ytHist = true;
+      window.playVideo._ytHistHook = true;
     }
   }
 
-  window.renderYouTubeStyleHistory = function() {
-    const grid = document.getElementById('videoGrid') || document.querySelector('main');
-    if (!grid) return;
+  window.showHistoryPage = function(filterText = '') {
+    ['eclipseShortsView', 'eclipseSubsView'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
 
-    const q = (document.getElementById('ytHistSearch')?.value || '').toLowerCase();
-    const list = JSON.parse(localStorage.getItem('eclipse_history_list') || '[]')
-      .filter(it => it.title.toLowerCase().includes(q) || it.author.toLowerCase().includes(q));
+    let view = document.getElementById('eclipseHistoryView');
+    if (!view) {
+      view = document.createElement('div');
+      view.id = 'eclipseHistoryView';
+      view.style.cssText = 'position:fixed; top:60px; left:220px; right:0; bottom:0; background:#09090d; z-index:915; overflow-y:auto; padding:26px 32px; color:#fff;';
+      if (window.innerWidth < 768) view.style.left = '0';
+      document.body.appendChild(view);
+    }
+
+    const all = JSON.parse(localStorage.getItem('eclipse_history_list') || '[]');
+    const q = (filterText || '').toLowerCase();
+    const list = all.filter(it => it.title.toLowerCase().includes(q) || it.author.toLowerCase().includes(q));
 
     const cards = list.length === 0
-      ? `<div style="padding:40px 20px; text-align:center; color:#a1a1aa; font-size:14px;">Tu historial de reproducción está vacío.</div>`
+      ? `<div style="color:#a1a1aa; font-size:14px; padding:40px 0; text-align:center;">${q ? 'No hay videos que coincidan.' : 'Tu historial de reproducciones está vacío.'}</div>`
       : list.map((it, idx) => `
-          <div style="display:flex; gap:16px; background:#121218; border:1px solid #27272a; border-radius:14px; padding:12px; margin-bottom:12px; align-items:flex-start; cursor:pointer;" onclick="if(typeof playVideo==='function') playVideo('${it.id}')">
-            <div style="width:210px; max-width:40%; aspect-ratio:16/9; background:#1e1b2e; border-radius:10px; overflow:hidden; flex-shrink:0; display:flex; align-items:center; justify-content:center; border:1px solid #3b0764;">
-              ${it.thumb ? `<img src="${it.thumb}" style="width:100%; height:100%; object-fit:cover;">` : `<svg width="32" height="32" viewBox="0 0 24 24" fill="#9333ea"><polygon points="6 4 20 12 6 20 6 4"/></svg>`}
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:16px; background:#121218; border:1px solid #27272a; border-radius:14px; padding:12px 16px; margin-bottom:12px; cursor:pointer;" onclick="window.goHomeEclipse(); if(typeof playVideo==='function') playVideo('${it.id}');">
+            <div style="display:flex; align-items:center; gap:14px; overflow:hidden;">
+              <div style="width:120px; height:68px; border-radius:10px; background:linear-gradient(135deg,#2e1065,#09090d); border:1px solid #4c1d95; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="#c084fc"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+              </div>
+              <div style="overflow:hidden;">
+                <div style="font-size:15px; font-weight:700; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${it.title}</div>
+                <div style="font-size:12px; color:#c084fc; margin-top:2px;">${it.author} · Visto el ${it.day} a las ${it.time}</div>
+              </div>
             </div>
-            <div style="flex:1; min-width:0;">
-              <div style="font-size:16px; font-weight:700; color:#fff; margin-bottom:4px;">${it.title}</div>
-              <div style="font-size:12.5px; color:#c084fc; font-weight:600; margin-bottom:6px;">${it.author} · Visto el ${it.date}</div>
-              <div style="font-size:12px; color:#a1a1aa; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${it.desc || 'Video reproducido en Eclipse'}</div>
-            </div>
-            <button type="button" title="Quitar del historial" onclick="event.stopPropagation(); let h=JSON.parse(localStorage.getItem('eclipse_history_list')||'[]'); h.splice(${idx},1); localStorage.setItem('eclipse_history_list',JSON.stringify(h)); renderYouTubeStyleHistory();" style="background:transparent; border:none; color:#a1a1aa; font-size:16px; cursor:pointer; padding:4px 8px;">✕</button>
+            <button type="button" onclick="event.stopPropagation(); let h=JSON.parse(localStorage.getItem('eclipse_history_list')||'[]'); h.splice(${idx},1); localStorage.setItem('eclipse_history_list',JSON.stringify(h)); showHistoryPage(document.getElementById('ytHistSearch')?.value||'');" style="background:transparent; border:none; color:#a1a1aa; font-size:16px; cursor:pointer; padding:6px 10px;">✕</button>
           </div>
         `).join('');
 
-    grid.style.display = 'block';
-    grid.innerHTML = `
-      <div style="max-width:980px; margin:0 auto; padding:10px 4px;">
-        <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px; margin-bottom:18px; border-bottom:1px solid #27272a; padding-bottom:14px;">
-          <h2 style="margin:0; font-size:21px; color:#fff;">Historial de reproducción</h2>
-          <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <input type="text" id="ytHistSearch" value="${q}" oninput="renderYouTubeStyleHistory()" placeholder="Buscar en el historial..." style="background:#18181f; border:1px solid #3f3f46; color:#fff; padding:8px 14px; border-radius:20px; font-size:13px; width:220px;" />
-            <button type="button" onclick="if(confirm('¿Borrar todo el historial de reproducción?')){localStorage.removeItem('eclipse_history_list'); renderYouTubeStyleHistory();}" style="background:#27272a; color:#fda4af; border:1px solid #7f1d1d; padding:8px 14px; border-radius:20px; font-size:12px; font-weight:700; cursor:pointer;">Borrar todo el historial</button>
-            <button type="button" onclick="location.reload()" style="background:#9333ea; color:#fff; border:none; padding:8px 14px; border-radius:20px; font-size:12px; font-weight:700; cursor:pointer;">Volver al Inicio</button>
+    view.innerHTML = `
+      <div style="max-width:1050px; margin:0 auto; display:grid; grid-template-columns:1fr 280px; gap:24px;">
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+            <h2 style="margin:0; font-size:21px;">Historial de reproducciones</h2>
+            <button type="button" onclick="window.goHomeEclipse()" style="background:#27272a; color:#fff; border:none; padding:7px 14px; border-radius:16px; font-size:12px; font-weight:700; cursor:pointer;">Volver al inicio</button>
           </div>
+          ${cards}
         </div>
-        ${cards}
+        <div style="background:#121218; border:1px solid #27272a; border-radius:16px; padding:18px; height:fit-content;">
+          <input id="ytHistSearch" type="text" value="${filterText}" oninput="showHistoryPage(this.value)" placeholder="Buscar en el historial..." style="width:100%; background:#09090d; border:1px solid #3f3f46; color:#fff; padding:9px 12px; border-radius:10px; font-size:13px; margin-bottom:14px;" />
+          <button type="button" onclick="if(confirm('¿Borrar todo el historial?')){localStorage.removeItem('eclipse_history_list'); showHistoryPage();}" style="width:100%; text-align:left; background:#18181f; border:1px solid #27272a; color:#fca5a5; padding:10px 12px; border-radius:10px; font-size:12.5px; font-weight:700; cursor:pointer; margin-bottom:10px;">Borrar todo el historial</button>
+          <button type="button" onclick="const p=localStorage.getItem('eclipse_hist_paused')==='1'; localStorage.setItem('eclipse_hist_paused', p?'0':'1'); showHistoryPage();" style="width:100%; text-align:left; background:#18181f; border:1px solid #27272a; color:#e4e4e7; padding:10px 12px; border-radius:10px; font-size:12.5px; font-weight:700; cursor:pointer;">${localStorage.getItem('eclipse_hist_paused')==='1' ? 'Reanudar el historial' : 'Pausar el historial'}</button>
+        </div>
       </div>
     `;
+    view.style.display = 'block';
+    const inp = document.getElementById('ytHistSearch');
+    if (inp && filterText) { inp.focus(); inp.setSelectionRange(filterText.length, filterText.length); }
   };
 
-  window.addEventListener('DOMContentLoaded', hookHistoryMenu);
-})();
+  function bootHistoryAndLogo() {
+    hookVideoHistory();
 
-// === VOLVER AL INICIO AL TOCAR EL LOGO / NOMBRE ECLIPSE AR O "INICIO" ===
-(function() {
-  window.goHomeEclipse = function() {
-    const hv = document.getElementById('eclipseHistoryView');
-    if (hv) hv.style.display = 'none';
-
-    const ho = document.getElementById('eclipseHistoryOverlay');
-    if (ho) ho.style.display = 'none';
-
-    // Limpiar buscador si había texto y mostrar todos los videos en portada
-    const searchInput = document.getElementById('searchInput') || document.querySelector('header input[type="text"]');
-    if (searchInput && searchInput.value) {
-      searchInput.value = '';
-    }
-    if (typeof renderVideos === 'function') {
-      renderVideos();
-    }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  function bindBrandHomeClick() {
-    const logoEl = document.querySelector('header .logo, header .brand, header a, header h1, header svg');
-    const brandContainer = logoEl ? (logoEl.closest('.logo, .brand, a') || logoEl.parentElement) : null;
-    if (brandContainer && !brandContainer._homeBound) {
-      brandContainer.style.cursor = 'pointer';
-      brandContainer.title = 'Volver al inicio de Eclipse';
-      brandContainer.addEventListener('click', (e) => {
+    // 1. Conectar el botón "Historial" del menú lateral izquierdo
+    const aside = document.querySelector('aside');
+    if (aside) {
+      let btn = document.getElementById('navEclipseHistory');
+      if (!btn) {
+        btn = document.createElement('div');
+        btn.id = 'navEclipseHistory';
+        btn.className = 'nav-item';
+        btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>Historial</span>`;
+        aside.insertBefore(btn, aside.children.item(3) || aside.firstChild);
+      }
+      btn.onclick = (e) => {
         e.preventDefault();
-        window.goHomeEclipse();
-      });
-      brandContainer._homeBound = true;
+        e.stopPropagation();
+        window.showHistoryPage('');
+      };
     }
 
-    // También conectar el primer botón del menú lateral ("Inicio")
-    const firstNav = document.querySelector('aside .nav-item');
-    if (firstNav && !firstNav._homeBound) {
-      firstNav.addEventListener('click', () => window.goHomeEclipse());
-      firstNav._homeBound = true;
+    // 2. Forzar que tocar el Logo o Título "Eclipse AR" arriba a la izquierda te lleve SOLO AL INICIO
+    const header = document.querySelector('header');
+    if (header) {
+      const logoZone = header.querySelector('.logo, .brand') || header.firstElementChild;
+      if (logoZone) {
+        const cleanLogo = logoZone.cloneNode(true);
+        logoZone.parentNode.replaceChild(cleanLogo, logoZone);
+        cleanLogo.style.cursor = 'pointer';
+        cleanLogo.title = 'Volver al inicio de Eclipse';
+        cleanLogo.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (typeof window.goHomeEclipse === 'function') window.goHomeEclipse();
+        });
+      }
     }
   }
 
-  if (document.body) bindBrandHomeClick();
-  else window.addEventListener('DOMContentLoaded', bindBrandHomeClick);
+  if (document.body) bootHistoryAndLogo();
+  else window.addEventListener('DOMContentLoaded', bootHistoryAndLogo);
 })();
