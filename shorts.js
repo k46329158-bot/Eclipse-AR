@@ -151,3 +151,22 @@ window.openShortsFeed = function(idx) {
   </div>`;
   view.style.display = 'flex';
 };
+
+// Arranque inmediato garantizado (sin depender de DOMContentLoaded)
+(function bootShortsNow() {
+  if (!localStorage.getItem('eclipse_shorts_db')) {
+    localStorage.setItem('eclipse_shorts_db', JSON.stringify([
+      { id: 'sh-1', title: '¿Por qué la Luna se vuelve roja en un Eclipse Total?', author: 'Biología & Cosmos', likes: 1420, dislikes: 4, color1: '#3b0764', color2: '#09090d', comments: [{ user: 'ExploradorLunar', text: 'Explicación impecable en menos de un minuto.', sticker: 'moon' }] },
+      { id: 'sh-2', title: 'Creando una animación fotograma a fotograma sin IA', author: 'Æiden Company', likes: 2890, dislikes: 2, color1: '#1e1b4b', color2: '#0f172a', comments: [{ user: 'ArteHumanoAR', text: 'Así da gusto ver talento real de verdad.', sticker: 'fire' }] }
+    ]));
+  }
+  const aside = document.querySelector('aside');
+  if (aside && !document.getElementById('navEclipseShorts')) {
+    const btn = document.createElement('div');
+    btn.id = 'navEclipseShorts';
+    btn.className = 'nav-item';
+    btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="3"/><polygon points="10 9 15 12 10 15 10 9" fill="currentColor"/></svg><span>Shorts</span>`;
+    btn.onclick = () => openShortsFeed(0);
+    aside.insertBefore(btn, aside.children.item(1) || aside.firstChild);
+  }
+})();
