@@ -127,3 +127,38 @@
   if (document.body) bootHistoryAndLogo();
   else window.addEventListener('DOMContentLoaded', bootHistoryAndLogo);
 })();
+
+// Barajar de verdad tanto los datos como las tarjetas visuales de la portada estilo YouTube
+window.goHomeEclipse = function() {
+  if (typeof window.replayEclipseIntro === 'function') window.replayEclipseIntro();
+
+  ['eclipseHistoryView', 'eclipseShortsView', 'eclipseSubsView', 'eclipseHistoryOverlay'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+
+  const searchInput = document.getElementById('searchInput') || document.querySelector('header input[type="text"]');
+  if (searchInput && searchInput.value) searchInput.value = '';
+
+  // 1. Mezclar array global si existe
+  if (typeof videos !== 'undefined' && Array.isArray(videos) && videos.length > 1) {
+    for (let i = videos.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [videos[i], videos[j]] = [videos[j], videos[i]];
+    }
+  }
+  if (typeof renderVideos === 'function') renderVideos();
+
+  // 2. Mezclar también directamente las tarjetas DOM dentro de la grilla de videos
+  const grid = document.getElementById('videoGrid') || document.querySelector('.video-grid, main .grid');
+  if (grid && grid.children.length > 1) {
+    const cards = Array.from(grid.children);
+    for (let i = cards.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      grid.appendChild(cards.at(j));
+      cards.splice(j, 1);
+    }
+  }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
