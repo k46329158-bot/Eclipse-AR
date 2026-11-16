@@ -1,3 +1,12 @@
+
+window.checkIsFounderActive = function() {
+  if (typeof isFounder !== 'undefined' && isFounder) return true;
+  if (typeof founderMode !== 'undefined' && founderMode) return true;
+  if (localStorage.getItem('eclipse_founder') === '1') return true;
+  if (document.body && document.body.innerText.includes('MODO FUNDADOR')) return true;
+  return false;
+};
+
 (function() {
   // Asegurar que .hidden siempre oculte los modales incluso con display:flex inline
   const st = document.createElement('style');
@@ -16,7 +25,7 @@
   };
 
   window.openAnimStudio = function() {
-    const isF = (typeof isFounder !== 'undefined' && isFounder) || localStorage.getItem('eclipse_founder') === '1';
+    const isF = window.checkIsFounderActive();
     const hasAnim = (typeof unlockedAnim !== 'undefined' && unlockedAnim) || localStorage.getItem('eclipse_unlocked_anim') === '1';
     if (!isF && !hasAnim) {
       alert('El Estudio de Animación Pro cuesta 30,000 Lunas en la Tienda de Lunas (o entra en Modo Fundador).');
@@ -34,7 +43,7 @@
 
   window.buyFeature = function(feat, cost) {
     let moons = Number(localStorage.getItem('eclipse_moons') || (typeof userMoons !== 'undefined' ? userMoons : 0));
-    const isF = (typeof isFounder !== 'undefined' && isFounder) || localStorage.getItem('eclipse_founder') === '1';
+    const isF = window.checkIsFounderActive();
     if (!isF && moons < cost) {
       alert(`Necesitas ${cost.toLocaleString()} Lunas. Actualmente tienes ${moons.toLocaleString()} Lunas.`);
       return;
@@ -100,4 +109,16 @@
   // Aplicar tema guardado al iniciar
   const savedTheme = localStorage.getItem('eclipse_theme');
   if (savedTheme) window.selectTheme(savedTheme, 0);
+})();
+
+// Aviso claro de "En desarrollo" en Estudio de Animación y Editor Pro
+(function() {
+  const animTitle = document.querySelector('#animModal h2');
+  if (animTitle && !animTitle.textContent.includes('En desarrollo')) {
+    animTitle.innerHTML += ' <span style="background:#3b0764;border:1px solid #a855f7;color:#e9d5ff;font-size:11px;padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:middle;">En desarrollo</span>';
+  }
+  const edStrong = Array.from(document.querySelectorAll('strong')).find(el => el.textContent.includes('Editor Pro de Video'));
+  if (edStrong && !edStrong.textContent.includes('En desarrollo')) {
+    edStrong.innerHTML += ' <span style="background:#3b0764;border:1px solid #a855f7;color:#e9d5ff;font-size:10.5px;padding:2px 7px;border-radius:10px;margin-left:6px;">En desarrollo</span>';
+  }
 })();

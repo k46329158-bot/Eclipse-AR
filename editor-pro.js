@@ -1,4 +1,13 @@
 
+window.checkIsFounderActive = function() {
+  if (typeof isFounder !== 'undefined' && isFounder) return true;
+  if (typeof founderMode !== 'undefined' && founderMode) return true;
+  if (localStorage.getItem('eclipse_founder') === '1') return true;
+  if (document.body && document.body.innerText.includes('MODO FUNDADOR')) return true;
+  return false;
+};
+
+
 window.openModal = function() {
   const m = document.getElementById('uploadModal');
   if (m) m.classList.remove('hidden');
@@ -734,7 +743,7 @@ window.closeModal = function() {
 
   // Botón rápido para que tú como Fundador nombres Admin a tu mejor amigo
   function addPromoteAdminOption() {
-    const isF = (typeof isFounder !== 'undefined' && isFounder) || localStorage.getItem('eclipse_founder') === '1';
+    const isF = window.checkIsFounderActive();
     if (!isF) return;
     const headerRight = document.querySelector('header .header-right') || document.querySelector('header');
     if (!headerRight || document.getElementById('promoteAdminBtn')) return;
