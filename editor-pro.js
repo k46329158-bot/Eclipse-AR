@@ -715,3 +715,55 @@ window.closeModal = function() {
     return res;
   };
 })();
+
+// === ROL E INSIGNIA DE ADMINISTRADOR PARA TU MEJOR AMIGO ===
+(function() {
+  window.getAdminsList = function() {
+    return JSON.parse(localStorage.getItem('eclipse_admins_list') || '[]');
+  };
+
+  window.grantAdminRole = function(username) {
+    if (!username) return;
+    const list = window.getAdminsList();
+    if (!list.some(x => x.toLowerCase() === username.toLowerCase())) {
+      list.push(username.trim());
+      localStorage.setItem('eclipse_admins_list', JSON.stringify(list));
+    }
+    alert(`¡${username} ahora tiene rango e insignia de Admin Oficial en Eclipseᴬᴿ!`);
+  };
+
+  // Botón rápido para que tú como Fundador nombres Admin a tu mejor amigo
+  function addPromoteAdminOption() {
+    const isF = (typeof isFounder !== 'undefined' && isFounder) || localStorage.getItem('eclipse_founder') === '1';
+    if (!isF) return;
+    const headerRight = document.querySelector('header .header-right') || document.querySelector('header');
+    if (!headerRight || document.getElementById('promoteAdminBtn')) return;
+
+    const btn = document.createElement('button');
+    btn.id = 'promoteAdminBtn';
+    btn.type = 'button';
+    btn.style.cssText = 'background:#1e1b4b; color:#38bdf8; border:1px solid #0284c7; padding:6px 11px; border-radius:16px; font-size:11.5px; font-weight:800; cursor:pointer;';
+    btn.textContent = '+ Nombrar Admin';
+    btn.onclick = () => {
+      const friend = prompt('Escribe el nombre exacto del canal de tu mejor amigo para hacerlo Admin:');
+      if (friend && friend.trim()) window.grantAdminRole(friend.trim());
+    };
+    headerRight.insertBefore(btn, headerRight.firstChild);
+  }
+
+  // Mostrar insignia "ADMIN" junto a su nombre si inició sesión con ese canal
+  function checkCurrentUserAdmin() {
+    const saved = JSON.parse(localStorage.getItem('eclipse_user') || 'null');
+    if (!saved || !saved.name) return;
+    const isAdm = window.getAdminsList().some(x => x.toLowerCase() === saved.name.toLowerCase());
+    if (isAdm) {
+      window.isEclipseAdmin = true;
+      const pill = document.getElementById('userProfilePill') || document.querySelector('header .user-badge');
+      if (pill && !pill.innerHTML.includes('ADMIN')) {
+        pill.innerHTML += ' <span style="background:#0284c7;color:#fff;font-size:10px;padding:2px 6px;border-radius:8px;margin-left:5px;font-weight:900;">ADMIN</span>';
+      }
+    }
+  }
+
+  setInterval(() => { addPromoteAdminOption(); checkCurrentUserAdmin(); }, 1500);
+})();
