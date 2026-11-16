@@ -170,3 +170,189 @@ window.openShortsFeed = function(idx) {
     aside.insertBefore(btn, aside.children.item(1) || aside.firstChild);
   }
 })();
+
+// === PANTALLA VACÍA CON NAVE ESPACIAL FLOTANDO: "No hay nada... XD" ===
+(function() {
+  // Limpiar los 2 shorts de ejemplo antiguos si quedaron guardados solos
+  try {
+    const cur = JSON.parse(localStorage.getItem('eclipse_shorts_db') || '[]');
+    if (cur.length === 2 && cur.at(0)?.id === 'sh-1' && cur.at(1)?.id === 'sh-2') {
+      localStorage.setItem('eclipse_shorts_db', '[]');
+    }
+  } catch (e) {}
+
+  const st = document.createElement('style');
+  st.textContent = `
+    @keyframes floatShip {
+      0%, 100% { transform: translateY(0px) rotate(-3deg); }
+      50%      { transform: translateY(-12px) rotate(3deg); }
+    }
+    .eclipse-empty-ship { animation: floatShip 3s ease-in-out infinite; }
+  `;
+  document.head.appendChild(st);
+
+  const origOpenShorts = window.openShortsFeed;
+  window.openShortsFeed = function(idx) {
+    const list = JSON.parse(localStorage.getItem('eclipse_shorts_db') || '[]');
+    if (list.length > 0) {
+      return origOpenShorts.apply(this, arguments);
+    }
+
+    let view = document.getElementById('eclipseShortsView');
+    if (!view) {
+      view = document.createElement('div');
+      view.id = 'eclipseShortsView';
+      view.style.cssText = 'position:fixed;top:60px;left:220px;right:0;bottom:0;background:#09090d;z-index:920;display:flex;align-items:center;justify-content:center;padding:20px;color:#fff;';
+      if (window.innerWidth < 768) view.style.left = '0';
+      document.body.appendChild(view);
+    }
+
+    view.innerHTML = `
+      <div style="text-align:center; max-width:420px; background:#121218; border:1px solid #3b0764; border-radius:24px; padding:34px 26px; box-shadow:0 20px 50px rgba(0,0,0,0.8);">
+        <div class="eclipse-empty-ship" style="display:inline-block; margin-bottom:14px;">
+          <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+            <!-- Estrellitas dibujadas -->
+            <circle cx="20" cy="28" r="2" fill="#c084fc"/>
+            <circle cx="98" cy="24" r="2.5" fill="#38bdf8"/>
+            <circle cx="92" cy="88" r="2" fill="#e879f9"/>
+            <circle cx="26" cy="92" r="1.8" fill="#ffffff"/>
+            <!-- Fuego propulsor -->
+            <path d="M52 86 L60 106 L68 86 Z" fill="#a855f7"/>
+            <path d="M55 86 L60 99 L65 86 Z" fill="#38bdf8"/>
+            <!-- Aletas laterales -->
+            <path d="M42 66 L26 82 L44 80 Z" fill="#7e22ce" stroke="#c084fc" stroke-width="2"/>
+            <path d="M78 66 L94 82 L76 80 Z" fill="#7e22ce" stroke="#c084fc" stroke-width="2"/>
+            <!-- Cuerpo de la nave espacial -->
+            <path d="M60 18 C75 34 80 58 76 84 L44 84 C40 58 45 34 60 18 Z" fill="#1e1b4b" stroke="#38bdf8" stroke-width="2.5"/>
+            <!-- Ventanilla circular -->
+            <circle cx="60" cy="50" r="11" fill="#09090d" stroke="#c084fc" stroke-width="2.5"/>
+            <circle cx="57" cy="47" r="3" fill="#7dd3fc" opacity="0.8"/>
+          </svg>
+        </div>
+        <h2 style="margin:0 0 8px; font-size:24px; font-weight:900; color:#ffffff;">No hay nada... XD</h2>
+        <p style="margin:0 0 20px; font-size:13.5px; color:#a1a1aa; line-height:1.45;">
+          Todavía nadie subió ningún Short a la órbita.<br>¡Sé el primero en estrenar Eclipse Shorts!
+        </p>
+        <div style="display:flex; gap:10px; justify-content:center;">
+          <button type="button" onclick="openUploadShortModal()" style="background:linear-gradient(135deg,#9333ea,#0284c7); color:#fff; border:none; padding:10px 18px; border-radius:16px; font-size:13px; font-weight:800; cursor:pointer;">+ Subir el primer Short</button>
+          <button type="button" onclick="document.getElementById('eclipseShortsView').style.display='none'" style="background:#27272a; color:#e4e4e7; border:none; padding:10px 16px; border-radius:16px; font-size:13px; font-weight:700; cursor:pointer;">Volver</button>
+        </div>
+      </div>
+    `;
+    view.style.display = 'flex';
+  };
+})();
+
+// === INTEGRACIÓN DE "MODO SHORT" DENTRO DEL BOTÓN + CREAR ===
+(function() {
+  window.eclipseCreateMode = 'video';
+
+  window.setEclipseCreateMode = function(mode) {
+    window.eclipseCreateMode = mode;
+    const bVid = document.getElementById('modeBtnVideo');
+    const bSh  = document.getElementById('modeBtnShort');
+    const hint = document.getElementById('shortModeHint');
+    if (bVid && bSh) {
+      bVid.style.background = mode === 'video' ? '#9333ea' : '#18181f';
+      bVid.style.color      = mode === 'video' ? '#fff' : '#a1a1aa';
+      bSh.style.background  = mode === 'short' ? 'linear-gradient(135deg,#9333ea,#0284c7)' : '#18181f';
+      bSh.style.color       = mode === 'short' ? '#fff' : '#a1a1aa';
+    }
+    if (hint) {
+      hint.style.display = mode === 'short' ? 'block' : 'none';
+    }
+  };
+
+  function injectCreateModeSelector() {
+    const form = document.querySelector('#uploadModal form') || document.getElementById('uploadForm') || document.getElementById('inFile')?.closest('form, .modal-box, .modal-card');
+    if (!form || document.getElementById('eclipseCreateModeBar')) return;
+
+    const bar = document.createElement('div');
+    bar.id = 'eclipseCreateModeBar';
+    bar.style.cssText = 'margin-bottom:14px; background:#09090d; border:1px solid #3b0764; border-radius:14px; padding:10px;';
+    bar.innerHTML = `
+      <div style="font-size:11.5px; color:#c084fc; font-weight:800; margin-bottom:8px;">SELECCIONA EL FORMATO DE PUBLICACIÓN:</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+        <button type="button" id="modeBtnVideo" onclick="setEclipseCreateMode('video')" style="background:#9333ea; color:#fff; border:none; padding:8px 10px; border-radius:10px; font-size:12px; font-weight:800; cursor:pointer;">Video Normal (Horizontal)</button>
+        <button type="button" id="modeBtnShort" onclick="setEclipseCreateMode('short')" style="background:#18181f; color:#a1a1aa; border:none; padding:8px 10px; border-radius:10px; font-size:12px; font-weight:800; cursor:pointer;">Eclipse Short (Video Corto)</button>
+      </div>
+      <div id="shortModeHint" style="display:none; margin-top:8px; font-size:11.5px; color:#7dd3fc;">
+        Modo Short activo: Tu video se publicará en formato vertical (9:16) dentro de Eclipse Shorts.
+      </div>
+    `;
+    form.insertBefore(bar, form.firstChild);
+
+    // Interceptar el envío del formulario cuando esté en Modo Short
+    form.addEventListener('submit', function(e) {
+      if (window.eclipseCreateMode !== 'short') return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+
+      const title = (document.getElementById('inTitle')?.value || '').trim();
+      const author = (document.getElementById('inAuthor')?.value || '').trim() || 'CreadorEclipse';
+      const fileInp = document.getElementById('inFile');
+      const file = fileInp && fileInp.files && fileInp.files.item(0);
+
+      if (!title) return alert('Escribe un título para tu Eclipse Short.');
+
+      // Pasar por el filtro Anti-IA si existe
+      if (typeof window.scan === 'function') {
+        const check = window.scan(title, '', file ? file.name : '');
+        if (check && check.ok === false) {
+          alert(check.reason || 'Contenido rechazado por el filtro Anti-IA de Eclipse.');
+          return;
+        }
+      }
+
+      const saveAndOpen = (videoUrl) => {
+        const list = JSON.parse(localStorage.getItem('eclipse_shorts_db') || '[]');
+        list.unshift({
+          id: 'sh-' + Date.now(),
+          title,
+          author,
+          videoUrl: videoUrl || '',
+          likes: 1,
+          dislikes: 0,
+          color1: '#4c1d95',
+          color2: '#09090d',
+          comments: []
+        });
+        localStorage.setItem('eclipse_shorts_db', JSON.stringify(list));
+
+        // Cerrar modal +Crear y abrir el Short recién publicado
+        const upModal = document.getElementById('uploadModal');
+        if (upModal) { upModal.classList.add('hidden'); upModal.style.display = 'none'; }
+        form.reset();
+        setEclipseCreateMode('video');
+        if (typeof window.openShortsFeed === 'function') window.openShortsFeed(0);
+      };
+
+      if (file) {
+        const blobUrl = URL.createObjectURL(file);
+        saveAndOpen(blobUrl);
+      } else {
+        saveAndOpen('');
+      }
+    }, true);
+  }
+
+  // Hacer que el botón "+ Subir el primer Short" abra directamente el modal +Crear en Modo Short
+  window.openUploadShortModal = function() {
+    const sv = document.getElementById('eclipseShortsView');
+    if (sv) sv.style.display = 'none';
+    const createBtn = document.querySelector('header button[onclick*="upload"], header button[onclick*="Upload"], header button[onclick*="Create"]');
+    if (createBtn) {
+      createBtn.click();
+    } else {
+      const m = document.getElementById('uploadModal');
+      if (m) { m.classList.remove('hidden'); m.style.display = 'flex'; }
+    }
+    setTimeout(() => {
+      injectCreateModeSelector();
+      setEclipseCreateMode('short');
+    }, 60);
+  };
+
+  if (document.body) injectCreateModeSelector();
+  else window.addEventListener('DOMContentLoaded', injectCreateModeSelector);
+})();
