@@ -74,3 +74,48 @@
 
   window.addEventListener('DOMContentLoaded', hookHistoryMenu);
 })();
+
+// === VOLVER AL INICIO AL TOCAR EL LOGO / NOMBRE ECLIPSE AR O "INICIO" ===
+(function() {
+  window.goHomeEclipse = function() {
+    const hv = document.getElementById('eclipseHistoryView');
+    if (hv) hv.style.display = 'none';
+
+    const ho = document.getElementById('eclipseHistoryOverlay');
+    if (ho) ho.style.display = 'none';
+
+    // Limpiar buscador si había texto y mostrar todos los videos en portada
+    const searchInput = document.getElementById('searchInput') || document.querySelector('header input[type="text"]');
+    if (searchInput && searchInput.value) {
+      searchInput.value = '';
+    }
+    if (typeof renderVideos === 'function') {
+      renderVideos();
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  function bindBrandHomeClick() {
+    const logoEl = document.querySelector('header .logo, header .brand, header a, header h1, header svg');
+    const brandContainer = logoEl ? (logoEl.closest('.logo, .brand, a') || logoEl.parentElement) : null;
+    if (brandContainer && !brandContainer._homeBound) {
+      brandContainer.style.cursor = 'pointer';
+      brandContainer.title = 'Volver al inicio de Eclipse';
+      brandContainer.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.goHomeEclipse();
+      });
+      brandContainer._homeBound = true;
+    }
+
+    // También conectar el primer botón del menú lateral ("Inicio")
+    const firstNav = document.querySelector('aside .nav-item');
+    if (firstNav && !firstNav._homeBound) {
+      firstNav.addEventListener('click', () => window.goHomeEclipse());
+      firstNav._homeBound = true;
+    }
+  }
+
+  if (document.body) bindBrandHomeClick();
+  else window.addEventListener('DOMContentLoaded', bindBrandHomeClick);
+})();
