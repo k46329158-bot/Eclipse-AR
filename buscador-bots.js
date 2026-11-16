@@ -172,3 +172,85 @@
 
   setInterval(hookTopSearchAndFounderBtns, 1200);
 })();
+
+// === DEFINICIÓN DIRECTA DEL PANEL DE JUSTICIA FUNDADOR Y ADMIN ===
+window.grantAdminRole = function(username) {
+  if (!username) return;
+  const list = JSON.parse(localStorage.getItem('eclipse_admins_list') || '[]');
+  if (!list.some(x => x.toLowerCase() === username.trim().toLowerCase())) {
+    list.push(username.trim());
+    localStorage.setItem('eclipse_admins_list', JSON.stringify(list));
+  }
+  alert('¡' + username.trim() + ' ahora es Admin Oficial de Eclipseᴬᴿ!');
+};
+
+window.indultarCanalFundador = function(canal) {
+  if (typeof channelStrikes !== 'undefined') {
+    delete channelStrikes[canal];
+    if (typeof saveProgress === 'function') saveProgress();
+  }
+  const list = JSON.parse(localStorage.getItem('eclipse_founder_exempt') || '[]');
+  if (!list.some(x => x.toLowerCase() === canal.toLowerCase())) {
+    list.push(canal);
+    localStorage.setItem('eclipse_founder_exempt', JSON.stringify(list));
+  }
+  window.openFounderJusticeModal();
+};
+
+window.revocarInmunidadFundador = function(canal) {
+  const list = JSON.parse(localStorage.getItem('eclipse_founder_exempt') || '[]')
+    .filter(x => x.toLowerCase() !== canal.toLowerCase());
+  localStorage.setItem('eclipse_founder_exempt', JSON.stringify(list));
+  window.openFounderJusticeModal();
+};
+
+window.openFounderJusticeModal = function() {
+  let m = document.getElementById('founderJusticeModal');
+  if (!m) {
+    m = document.createElement('div');
+    m.id = 'founderJusticeModal';
+    m.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:2147483647; display:flex; align-items:center; justify-content:center; padding:16px;';
+    document.body.appendChild(m);
+  }
+
+  const strikesObj = (typeof channelStrikes !== 'undefined') ? channelStrikes : {};
+  const exemptList = JSON.parse(localStorage.getItem('eclipse_founder_exempt') || '[]');
+  const allChannels = Array.from(new Set([...Object.keys(strikesObj), ...exemptList]));
+
+  const rowsHtml = allChannels.length === 0
+    ? '<p style="color:#a1a1aa; font-size:12.5px; text-align:center; padding:16px 0;">Ningún canal tiene faltas ni inmunidades registradas todavía.</p>'
+    : allChannels.map(ch => {
+        const st = strikesObj[ch] || 0;
+        const isExempt = exemptList.some(x => x.toLowerCase() === ch.toLowerCase());
+        return `
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; background:#18181f; border:1px solid ${isExempt ? '#38bdf8' : '#27272a'}; padding:10px 12px; border-radius:12px; margin-bottom:8px;">
+            <div>
+              <div style="font-weight:700; font-size:13.5px; color:#fff;">${ch}</div>
+              <div style="font-size:11px; color:${isExempt ? '#38bdf8' : '#fda4af'};">
+                ${isExempt ? 'PROTEGIDO POR EL FUNDADOR (El Bot no puede bloquearlo)' : 'Faltas acumuladas: ' + st}
+              </div>
+            </div>
+            <div>
+              ${isExempt
+                ? `<button type="button" onclick="revocarInmunidadFundador('${ch.replace(/'/g, "\\'")}')" style="background:#7f1d1d; color:#fecaca; border:none; padding:6px 11px; border-radius:10px; font-size:11px; font-weight:700; cursor:pointer;">Reactivar Bot</button>`
+                : `<button type="button" onclick="indultarCanalFundador('${ch.replace(/'/g, "\\'")}')" style="background:#0284c7; color:#fff; border:none; padding:6px 11px; border-radius:10px; font-size:11px; font-weight:700; cursor:pointer;">Quitar Falta e Inmunizar</button>`
+              }
+            </div>
+          </div>
+        `;
+      }).join('');
+
+  m.innerHTML = `
+    <div style="width:470px; max-width:95vw; max-height:85vh; overflow-y:auto; background:#121218; border:1px solid #38bdf8; border-radius:18px; padding:22px; color:#fff; position:relative;">
+      <button type="button" onclick="document.getElementById('founderJusticeModal').style.display='none'" style="position:absolute; top:12px; right:12px; background:#27272a; color:#fff; border:none; width:28px; height:28px; border-radius:50%; cursor:pointer;">X</button>
+      <h3 style="margin:0 0 4px; font-size:17px;">Panel de Justicia · Solo Fundador</h3>
+      <p style="margin:0 0 14px; font-size:12px; color:#a1a1aa;">Si el bot cometió un malentendido, quita la falta y blinda al creador para que el bot no vuelva a bloquearlo sin tu orden.</p>
+      <div style="display:flex; gap:6px; margin-bottom:14px;">
+        <input id="manualExemptName" type="text" placeholder="Escribir nombre de canal para inmunizar..." style="flex:1; background:#09090d; border:1px solid #3f3f46; color:#fff; padding:8px 10px; border-radius:10px; font-size:12.5px;" />
+        <button type="button" onclick="const v=document.getElementById('manualExemptName').value.trim(); if(v) indultarCanalFundador(v);" style="background:#9333ea; color:#fff; border:none; padding:8px 12px; border-radius:10px; font-size:12px; font-weight:700; cursor:pointer;">Inmunizar</button>
+      </div>
+      ${rowsHtml}
+    </div>
+  `;
+  m.style.display = 'flex';
+};
