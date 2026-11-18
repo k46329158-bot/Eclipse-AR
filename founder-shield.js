@@ -1,3 +1,27 @@
+(function(){
+  const urls = [
+    "https://gstatic.com" + "/firebasejs/10.12.2/firebase-app-compat.js",
+    "https://gstatic.com" + "/firebasejs/10.12.2/firebase-auth-compat.js"
+  ];
+  function loadNext(i) {
+    if (i >= urls.length) {
+      if (window.firebase && !firebase.apps.length) {
+        firebase.initializeApp({
+          apiKey: "AIzaSyDRqYi8BsrjP4gdxmdq5XKiWnrn9aDyKGg",
+          authDomain: "://firebaseapp.com",
+          projectId: "eclipse-aiden"
+        });
+      }
+      return;
+    }
+    const sc = document.createElement("script");
+    sc.src = urls[i];
+    sc.onload = () => loadNext(i + 1);
+    document.head.appendChild(sc);
+  }
+  loadNext(0);
+})();
+
 (function() {
   const FOUNDER_EMAIL = 'k46329158@gmail.com';
   if (window.firebase && firebase.apps && firebase.apps.length === 0) {
