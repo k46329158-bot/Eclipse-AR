@@ -115,3 +115,71 @@
     }
   }, 500);
 })();
+
+// === MENÚ DE CONFIGURACIÓN EXCLUSIVO DEL FUNDADOR (ENGRANAJE LIMPIO) ===
+(function() {
+  window.openFounderSettingsHub = function() {
+    if (!window.checkIsFounderActive()) return;
+    let m = document.getElementById('founderHubModal');
+    if (!m) {
+      m = document.createElement('div');
+      m.id = 'founderHubModal';
+      m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:2147483646;display:flex;align-items:center;justify-content:center;padding:16px;';
+      document.body.appendChild(m);
+    }
+    m.innerHTML = `
+      <div style="width:410px;max-width:94vw;background:#121218;border:1px solid #9333ea;border-radius:20px;padding:22px;color:#fff;position:relative;box-shadow:0 20px 50px rgba(0,0,0,0.85);">
+        <button type="button" onclick="document.getElementById('founderHubModal').style.display='none'" style="position:absolute;top:12px;right:12px;background:#27272a;color:#fff;border:none;width:28px;height:28px;border-radius:50%;cursor:pointer;">X</button>
+        <div style="font-size:11px;color:#c084fc;font-weight:800;letter-spacing:1px;">ÆIDEN COMPANY · PANEL PRIVADO</div>
+        <h3 style="margin:2px 0 14px;font-size:18px;">Configuración del Fundador</h3>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <button type="button" onclick="document.getElementById('founderHubModal').style.display='none'; openFounderJusticeModal();" style="display:flex;align-items:center;justify-content:space-between;background:#18181f;border:1px solid #0284c7;color:#fff;padding:12px 14px;border-radius:14px;cursor:pointer;text-align:left;">
+            <div><strong style="color:#38bdf8;display:block;font-size:13.5px;">Justicia Fundador</strong><span style="font-size:11.5px;color:#a1a1aa;">Quitar faltas e inmunizar canales contra bots</span></div>
+            <span style="color:#38bdf8;font-weight:900;">→</span>
+          </button>
+          <button type="button" onclick="document.getElementById('founderHubModal').style.display='none'; const f=prompt('Nombre exacto del canal de tu mejor amigo para hacerlo Admin:'); if(f) grantAdminRole(f);" style="display:flex;align-items:center;justify-content:space-between;background:#18181f;border:1px solid #9333ea;color:#fff;padding:12px 14px;border-radius:14px;cursor:pointer;text-align:left;">
+            <div><strong style="color:#c084fc;display:block;font-size:13.5px;">+ Nombrar Admin</strong><span style="font-size:11.5px;color:#a1a1aa;">Dar rango e insignia Admin oficial</span></div>
+            <span style="color:#c084fc;font-weight:900;">→</span>
+          </button>
+          <button type="button" onclick="document.getElementById('founderHubModal').style.display='none'; if(typeof openFounderAccountsModal==='function') openFounderAccountsModal();" style="display:flex;align-items:center;justify-content:space-between;background:#18181f;border:1px solid #10b981;color:#fff;padding:12px 14px;border-radius:14px;cursor:pointer;text-align:left;">
+            <div><strong style="color:#34d399;display:block;font-size:13.5px;">Cuentas Registradas</strong><span style="font-size:11.5px;color:#a1a1aa;">Ver directorio privado de usuarios verificados</span></div>
+            <span style="color:#34d399;font-weight:900;">→</span>
+          </button>
+        </div>
+      </div>
+    `;
+    m.style.display = 'flex';
+  };
+
+  setInterval(() => {
+    const isF = window.checkIsFounderActive();
+    // Ocultar los botones sueltos y la barra ancha para dejar el header limpio y espaciado
+    ['founderCleanBar', 'promoteAdminBtn', 'founderJusticeBtn', 'founderToolsBar', 'founderAccountsBtn'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+    const banner = Array.from(document.querySelectorAll('div, section')).find(el => el.textContent && el.textContent.includes('MODO FUNDADOR:') && el.offsetHeight < 100);
+    if (banner) banner.style.display = 'none';
+
+    // Mostrar únicamente un botón discreto de engranaje (⚙️) junto a tu perfil si eres Fundador
+    const hr = document.querySelector('header .header-right') || document.querySelector('header');
+    if (hr) {
+      let gear = document.getElementById('founderGearBtn');
+      if (isF) {
+        if (!gear) {
+          gear = document.createElement('button');
+          gear.id = 'founderGearBtn';
+          gear.type = 'button';
+          gear.title = 'Configuración del Fundador';
+          gear.style.cssText = 'background:#1e1b4b;color:#c084fc;border:1px solid #7e22ce;width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;';
+          gear.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
+          gear.onclick = window.openFounderSettingsHub;
+          hr.appendChild(gear);
+        }
+        gear.style.display = 'inline-flex';
+      } else if (gear) {
+        gear.style.display = 'none';
+      }
+    }
+  }, 600);
+})();
