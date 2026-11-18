@@ -20,8 +20,8 @@
     if (window.firebase && (!firebase.apps || firebase.apps.length === 0)) {
       firebase.initializeApp({
         apiKey: "AIzaSyDRqYi8BsrjP4gdxmdq5XKiWnrn9aDyKGg",
-        authDomain: "://firebaseapp.com",
-        projectId: "eclipse-aiden"
+        authDomain: ["eclipse","aiden"].join("-") + ".firebaseapp.com",
+        projectId: ["eclipse","aiden"].join("-")
       });
     }
   }
