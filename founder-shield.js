@@ -1,3 +1,4 @@
+if(window.firebase && !firebase.apps.length){firebase.initializeApp({apiKey:"AIzaSyDRqYi8BsrjP4gdxmdq5XKiWnrn9aDyKGg",authDomain:"://firebaseapp.com",projectId:"eclipse-aiden"});}
 (function() {
   const FOUNDER_EMAIL = 'k46329158@gmail.com';
   const FS_ACCOUNTS = 'https://googleapis.com';
